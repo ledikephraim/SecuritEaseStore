@@ -30,7 +30,7 @@ public class OrderController {
 
     /**
      * Get all orders with pagination.
-     * 
+     *
      * @param page zero-based page number
      * @param size page size (default 50, max 500)
      * @param customerId optional customer ID filter
@@ -41,50 +41,49 @@ public class OrderController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = DEFAULT_PAGE_SIZE + "") int size,
             @RequestParam(required = false) Long customerId) {
-        
+
         size = Math.min(size, MAX_PAGE_SIZE);
         size = Math.max(size, 1);
-        
+
         Pageable pageable = PageRequest.of(page, size);
         Page<Long> orderIds;
-        
+
         // Customer-filtered orders: return without customer (context already in query param)
         if (customerId != null) {
             orderIds = orderRepository.findOrderIdsByCustomerId(customerId, pageable);
-            
+
             if (orderIds.isEmpty()) {
                 return new PageImpl<>(List.of(), pageable, 0);
             }
-            
-            List<Order> orders = orderRepository.findOrdersByIdsWithCustomers(
-                orderIds.getContent());
+
+            List<Order> orders = orderRepository.findOrdersByIdsWithCustomers(orderIds.getContent());
             List<OrderSimpleDTO> dtos = orderMapper.ordersToOrderSimpleDTOs(orders);
             return new PageImpl<>(dtos, pageable, orderIds.getTotalElements());
         }
-        
+
         // General order list: return with customer details (customer context NOT in URL)
         orderIds = orderRepository.findOrderIds(pageable);
-        
+
         if (orderIds.isEmpty()) {
             return new PageImpl<>(List.of(), pageable, 0);
         }
-        
-        List<Order> orders = orderRepository.findOrdersByIdsWithCustomers(
-            orderIds.getContent());
+
+        List<Order> orders = orderRepository.findOrdersByIdsWithCustomers(orderIds.getContent());
         List<OrderDTO> dtos = orderMapper.ordersToOrderDTOs(orders);
         return new PageImpl<>(dtos, pageable, orderIds.getTotalElements());
     }
 
     /**
      * Get a specific order by ID with its customer details.
-     * 
+     *
      * @param id order ID
      * @return order with customer details, or 404 if not found
      */
     @GetMapping("/{id}")
     public OrderDTO getOrderById(@PathVariable Long id) {
-        Order order = orderRepository.findByIdWithCustomer(id)
-            .orElseThrow(() -> new RuntimeException("Order not found: " + id));
+        Order order = orderRepository
+                .findByIdWithCustomer(id)
+                .orElseThrow(() -> new RuntimeException("Order not found: " + id));
         return orderMapper.orderToOrderDTO(order);
     }
 

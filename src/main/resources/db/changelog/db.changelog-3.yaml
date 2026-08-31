@@ -1,0 +1,7 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3-customer-name-trgm-index
+      author: developer@securitease.com
+      changes:
+        - sqlFile:
+            path: db/changelog/add-customer-name-trgm-index.sql
