@@ -1,8 +1,8 @@
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/store
-    username: postgres
-    password: 123
+    username: admin
+    password: admin
   jpa:
     hibernate:
       ddl-auto: validate
