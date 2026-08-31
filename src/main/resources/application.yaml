@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5433/store
-    username: admin
-    password: admin
+    url: jdbc:postgresql://localhost:5432/store
+    username: postgres
+    password: 123
   jpa:
     hibernate:
       ddl-auto: validate
@@ -13,3 +13,8 @@ spring:
         default_batch_fetch_size: 10
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml
+  springdoc:
+    api-docs:
+      enabled: false
+    swagger-ui:
+      url: /openapi.yaml
