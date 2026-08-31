@@ -3,6 +3,7 @@ package com.example.store.service;
 import com.example.store.dto.OrderDTO;
 import com.example.store.dto.OrderSimpleDTO;
 import com.example.store.entity.Order;
+import com.example.store.exception.NotFoundException;
 import com.example.store.mapper.OrderMapper;
 import com.example.store.repository.OrderRepository;
 
@@ -64,7 +65,7 @@ public class OrderService {
     public OrderDTO getOrderById(Long id) {
         Order order = orderRepository
                 .findByIdWithCustomer(id)
-                .orElseThrow(() -> new RuntimeException("Order not found: " + id));
+                .orElseThrow(() -> new NotFoundException("Order not found: " + id));
         return orderMapper.orderToOrderDTO(order);
     }
 

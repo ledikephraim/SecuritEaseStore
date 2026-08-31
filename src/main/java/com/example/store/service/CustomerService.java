@@ -5,6 +5,7 @@ import com.example.store.dto.CustomerSummaryDTO;
 import com.example.store.dto.OrderSimpleDTO;
 import com.example.store.entity.Customer;
 import com.example.store.entity.Order;
+import com.example.store.exception.NotFoundException;
 import com.example.store.mapper.CustomerMapper;
 import com.example.store.mapper.OrderMapper;
 import com.example.store.repository.CustomerOrderCount;
@@ -75,7 +76,7 @@ public class CustomerService {
      */
     public CustomerSummaryDTO getCustomerById(Long id) {
         Customer customer =
-                customerRepository.findById(id).orElseThrow(() -> new RuntimeException("Customer not found: " + id));
+                customerRepository.findById(id).orElseThrow(() -> new NotFoundException("Customer not found: " + id));
 
         List<CustomerOrderCount> counts = customerRepository.findOrderCountByCustomerIds(List.of(id));
         long orderCount = counts.isEmpty() ? 0 : counts.get(0).orderCount();
@@ -86,7 +87,7 @@ public class CustomerService {
     /** Get paginated orders for a specific customer. */
     public Page<OrderSimpleDTO> getCustomerOrders(Long customerId, int page, int size) {
         if (!customerRepository.existsById(customerId)) {
-            throw new RuntimeException("Customer not found: " + customerId);
+            throw new NotFoundException("Customer not found: " + customerId);
         }
 
         Pageable pageable = PageRequest.of(page, clampPageSize(size));

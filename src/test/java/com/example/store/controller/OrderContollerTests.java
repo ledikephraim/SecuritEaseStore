@@ -3,6 +3,7 @@ package com.example.store.controller;
 import com.example.store.dto.OrderCustomerDTO;
 import com.example.store.dto.OrderDTO;
 import com.example.store.entity.Order;
+import com.example.store.exception.NotFoundException;
 import com.example.store.service.OrderService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -85,5 +86,14 @@ class OrderControllerTests {
         mockMvc.perform(get("/order/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.description").value("Test Order"));
+    }
+
+    @Test
+    void testGetOrderByIdReturns404WhenNotFound() throws Exception {
+        when(orderService.getOrderById(999L)).thenThrow(new NotFoundException("Order not found: 999"));
+
+        mockMvc.perform(get("/order/999"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.detail").value("Order not found: 999"));
     }
 }
