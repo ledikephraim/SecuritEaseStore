@@ -1,8 +1,8 @@
 package com.example.store.controller;
 
-import com.example.store.dto.CustomerDTO;
-import com.example.store.dto.CustomerSummaryDTO;
-import com.example.store.entity.Customer;
+import com.example.store.dto.CreateCustomerRequest;
+import com.example.store.dto.CustomerResponse;
+import com.example.store.dto.CustomerSummaryResponse;
 import com.example.store.exception.NotFoundException;
 import com.example.store.service.CustomerService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -39,16 +39,11 @@ class CustomerControllerTests {
     @MockitoBean
     private CustomerService customerService;
 
-    private Customer customer;
-    private CustomerSummaryDTO summary;
+    private CustomerSummaryResponse summary;
 
     @BeforeEach
     void setUp() {
-        customer = new Customer();
-        customer.setName("John Smith");
-        customer.setId(1L);
-
-        summary = new CustomerSummaryDTO();
+        summary = new CustomerSummaryResponse();
         summary.setId(1L);
         summary.setName("John Smith");
         summary.setOrderCount(0);
@@ -56,21 +51,24 @@ class CustomerControllerTests {
 
     @Test
     void testCreateCustomer() throws Exception {
-        CustomerDTO dto = new CustomerDTO();
-        dto.setId(1L);
-        dto.setName("John Smith");
-        when(customerService.createCustomer(any(Customer.class))).thenReturn(dto);
+        CreateCustomerRequest request = new CreateCustomerRequest();
+        request.setName("John Smith");
+
+        CustomerResponse response = new CustomerResponse();
+        response.setId(1L);
+        response.setName("John Smith");
+        when(customerService.createCustomer(any(CreateCustomerRequest.class))).thenReturn(response);
 
         mockMvc.perform(post("/customer")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(customer)))
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.name").value("John Smith"));
     }
 
     @Test
     void testGetAllCustomers() throws Exception {
-        Page<CustomerSummaryDTO> page = new PageImpl<>(List.of(summary), PageRequest.of(0, 50), 1);
+        Page<CustomerSummaryResponse> page = new PageImpl<>(List.of(summary), PageRequest.of(0, 50), 1);
         when(customerService.getAllCustomers(eq(0), eq(50), isNull())).thenReturn(page);
 
         mockMvc.perform(get("/customer"))
@@ -80,7 +78,7 @@ class CustomerControllerTests {
 
     @Test
     void testGetAllCustomersPassesSearchQueryToService() throws Exception {
-        Page<CustomerSummaryDTO> page = new PageImpl<>(List.of(summary), PageRequest.of(0, 50), 1);
+        Page<CustomerSummaryResponse> page = new PageImpl<>(List.of(summary), PageRequest.of(0, 50), 1);
         when(customerService.getAllCustomers(0, 50, "mit")).thenReturn(page);
 
         mockMvc.perform(get("/customer").param("q", "mit"))

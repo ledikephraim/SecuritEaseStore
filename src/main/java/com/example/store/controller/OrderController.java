@@ -1,7 +1,7 @@
 package com.example.store.controller;
 
-import com.example.store.dto.OrderDTO;
-import com.example.store.entity.Order;
+import com.example.store.dto.CreateOrderRequest;
+import com.example.store.dto.OrderResponse;
 import com.example.store.service.OrderService;
 
 import lombok.RequiredArgsConstructor;
@@ -39,13 +39,13 @@ public class OrderController {
      * @return order with customer details, or 404 if not found
      */
     @GetMapping("/{id}")
-    public OrderDTO getOrderById(@PathVariable Long id) {
+    public OrderResponse getOrderById(@PathVariable Long id) {
         return orderService.getOrderById(id);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public OrderDTO createOrder(@RequestBody Order order) {
-        return orderService.createOrder(order);
+    public OrderResponse createOrder(@RequestBody CreateOrderRequest request) {
+        return orderService.createOrder(request);
     }
 }

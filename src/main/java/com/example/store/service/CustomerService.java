@@ -1,8 +1,9 @@
 package com.example.store.service;
 
-import com.example.store.dto.CustomerDTO;
-import com.example.store.dto.CustomerSummaryDTO;
-import com.example.store.dto.OrderSimpleDTO;
+import com.example.store.dto.CreateCustomerRequest;
+import com.example.store.dto.CustomerResponse;
+import com.example.store.dto.CustomerSummaryResponse;
+import com.example.store.dto.OrderSimpleResponse;
 import com.example.store.entity.Customer;
 import com.example.store.entity.Order;
 import com.example.store.exception.NotFoundException;
@@ -41,7 +42,7 @@ public class CustomerService {
      * Get all customers paginated, optionally filtered by a substring match against one of the words in the customer's
      * name (case-insensitive).
      */
-    public Page<CustomerSummaryDTO> getAllCustomers(int page, int size, String q) {
+    public Page<CustomerSummaryResponse> getAllCustomers(int page, int size, String q) {
         Pageable pageable = PageRequest.of(page, clampPageSize(size));
         String query = q == null ? null : q.trim();
 
@@ -63,8 +64,8 @@ public class CustomerService {
             orderCountMap.put(row.customerId(), row.orderCount());
         }
 
-        List<CustomerSummaryDTO> summaries = customers.stream()
-                .map(c -> toSummaryDTO(c, orderCountMap.getOrDefault(c.getId(), 0L)))
+        List<CustomerSummaryResponse> summaries = customers.stream()
+                .map(c -> toSummaryResponse(c, orderCountMap.getOrDefault(c.getId(), 0L)))
                 .toList();
 
         return new PageImpl<>(summaries, pageable, customerIds.getTotalElements());
@@ -74,18 +75,18 @@ public class CustomerService {
      * Get a specific customer by ID. Returns customer details ONLY (no orders) to prevent unbounded relationship
      * loading. If you need this customer's orders, use {@link #getCustomerOrders(Long, int, int)} instead.
      */
-    public CustomerSummaryDTO getCustomerById(Long id) {
+    public CustomerSummaryResponse getCustomerById(Long id) {
         Customer customer =
                 customerRepository.findById(id).orElseThrow(() -> new NotFoundException("Customer not found: " + id));
 
         List<CustomerOrderCount> counts = customerRepository.findOrderCountByCustomerIds(List.of(id));
         long orderCount = counts.isEmpty() ? 0 : counts.get(0).orderCount();
 
-        return toSummaryDTO(customer, orderCount);
+        return toSummaryResponse(customer, orderCount);
     }
 
     /** Get paginated orders for a specific customer. */
-    public Page<OrderSimpleDTO> getCustomerOrders(Long customerId, int page, int size) {
+    public Page<OrderSimpleResponse> getCustomerOrders(Long customerId, int page, int size) {
         if (!customerRepository.existsById(customerId)) {
             throw new NotFoundException("Customer not found: " + customerId);
         }
@@ -99,25 +100,27 @@ public class CustomerService {
 
         // Fetch orders WITHOUT customer data (customer context already known from URL)
         List<Order> orders = orderRepository.findOrdersByIdsWithCustomers(orderIds.getContent());
-        List<OrderSimpleDTO> dtos = orderMapper.ordersToOrderSimpleDTOs(orders);
+        List<OrderSimpleResponse> dtos = orderMapper.ordersToOrderSimpleResponses(orders);
 
         return new PageImpl<>(dtos, pageable, orderIds.getTotalElements());
     }
 
     @Transactional
-    public CustomerDTO createCustomer(Customer customer) {
-        return customerMapper.customerToCustomerDTO(customerRepository.save(customer));
+    public CustomerResponse createCustomer(CreateCustomerRequest request) {
+        Customer customer = new Customer();
+        customer.setName(request.getName());
+        return customerMapper.customerToCustomerResponse(customerRepository.save(customer));
     }
 
     private static int clampPageSize(int size) {
         return Math.max(Math.min(size, MAX_PAGE_SIZE), 1);
     }
 
-    private static CustomerSummaryDTO toSummaryDTO(Customer customer, long orderCount) {
-        CustomerSummaryDTO dto = new CustomerSummaryDTO();
-        dto.setId(customer.getId());
-        dto.setName(customer.getName());
-        dto.setOrderCount((int) orderCount);
-        return dto;
+    private static CustomerSummaryResponse toSummaryResponse(Customer customer, long orderCount) {
+        CustomerSummaryResponse response = new CustomerSummaryResponse();
+        response.setId(customer.getId());
+        response.setName(customer.getName());
+        response.setOrderCount((int) orderCount);
+        return response;
     }
 }

@@ -1,10 +1,13 @@
 package com.example.store.service;
 
-import com.example.store.dto.OrderDTO;
-import com.example.store.dto.OrderSimpleDTO;
+import com.example.store.dto.CreateOrderRequest;
+import com.example.store.dto.OrderResponse;
+import com.example.store.dto.OrderSimpleResponse;
+import com.example.store.entity.Customer;
 import com.example.store.entity.Order;
 import com.example.store.exception.NotFoundException;
 import com.example.store.mapper.OrderMapper;
+import com.example.store.repository.CustomerRepository;
 import com.example.store.repository.OrderRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -26,6 +29,7 @@ public class OrderService {
     public static final int MAX_PAGE_SIZE = 500;
 
     private final OrderRepository orderRepository;
+    private final CustomerRepository customerRepository;
     private final OrderMapper orderMapper;
 
     /**
@@ -46,7 +50,7 @@ public class OrderService {
             }
 
             List<Order> orders = orderRepository.findOrdersByIdsWithCustomers(orderIds.getContent());
-            List<OrderSimpleDTO> dtos = orderMapper.ordersToOrderSimpleDTOs(orders);
+            List<OrderSimpleResponse> dtos = orderMapper.ordersToOrderSimpleResponses(orders);
             return new PageImpl<>(dtos, pageable, orderIds.getTotalElements());
         }
 
@@ -57,21 +61,29 @@ public class OrderService {
         }
 
         List<Order> orders = orderRepository.findOrdersByIdsWithCustomers(orderIds.getContent());
-        List<OrderDTO> dtos = orderMapper.ordersToOrderDTOs(orders);
+        List<OrderResponse> dtos = orderMapper.ordersToOrderResponses(orders);
         return new PageImpl<>(dtos, pageable, orderIds.getTotalElements());
     }
 
     /** Get a specific order by ID with its customer details. */
-    public OrderDTO getOrderById(Long id) {
+    public OrderResponse getOrderById(Long id) {
         Order order = orderRepository
                 .findByIdWithCustomer(id)
                 .orElseThrow(() -> new NotFoundException("Order not found: " + id));
-        return orderMapper.orderToOrderDTO(order);
+        return orderMapper.orderToOrderResponse(order);
     }
 
     @Transactional
-    public OrderDTO createOrder(Order order) {
-        return orderMapper.orderToOrderDTO(orderRepository.save(order));
+    public OrderResponse createOrder(CreateOrderRequest request) {
+        Customer customer = customerRepository
+                .findById(request.getCustomerId())
+                .orElseThrow(() -> new NotFoundException("Customer not found: " + request.getCustomerId()));
+
+        Order order = new Order();
+        order.setDescription(request.getDescription());
+        order.setCustomer(customer);
+
+        return orderMapper.orderToOrderResponse(orderRepository.save(order));
     }
 
     private static int clampPageSize(int size) {

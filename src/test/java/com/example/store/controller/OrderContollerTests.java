@@ -1,8 +1,8 @@
 package com.example.store.controller;
 
-import com.example.store.dto.OrderCustomerDTO;
-import com.example.store.dto.OrderDTO;
-import com.example.store.entity.Order;
+import com.example.store.dto.CreateOrderRequest;
+import com.example.store.dto.OrderCustomerResponse;
+import com.example.store.dto.OrderResponse;
 import com.example.store.exception.NotFoundException;
 import com.example.store.service.OrderService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -37,32 +37,31 @@ class OrderControllerTests {
     @MockitoBean
     private OrderService orderService;
 
-    private Order order;
-    private OrderDTO orderDTO;
+    private OrderResponse orderResponse;
 
     @BeforeEach
     void setUp() {
-        order = new Order();
-        order.setDescription("Test Order");
-        order.setId(1L);
+        OrderCustomerResponse customerResponse = new OrderCustomerResponse();
+        customerResponse.setId(1L);
+        customerResponse.setName("John Doe");
 
-        OrderCustomerDTO customerDTO = new OrderCustomerDTO();
-        customerDTO.setId(1L);
-        customerDTO.setName("John Doe");
-
-        orderDTO = new OrderDTO();
-        orderDTO.setId(1L);
-        orderDTO.setDescription("Test Order");
-        orderDTO.setCustomer(customerDTO);
+        orderResponse = new OrderResponse();
+        orderResponse.setId(1L);
+        orderResponse.setDescription("Test Order");
+        orderResponse.setCustomer(customerResponse);
     }
 
     @Test
     void testCreateOrder() throws Exception {
-        when(orderService.createOrder(any(Order.class))).thenReturn(orderDTO);
+        CreateOrderRequest request = new CreateOrderRequest();
+        request.setDescription("Test Order");
+        request.setCustomerId(1L);
+
+        when(orderService.createOrder(any(CreateOrderRequest.class))).thenReturn(orderResponse);
 
         mockMvc.perform(post("/order")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(order)))
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.description").value("Test Order"))
                 .andExpect(jsonPath("$.customer.name").value("John Doe"));
@@ -70,7 +69,7 @@ class OrderControllerTests {
 
     @Test
     void testGetAllOrders() throws Exception {
-        Page<OrderDTO> page = new PageImpl<>(List.of(orderDTO), PageRequest.of(0, 50), 1);
+        Page<OrderResponse> page = new PageImpl<>(List.of(orderResponse), PageRequest.of(0, 50), 1);
         when(orderService.getAllOrders(0, 50, null)).thenReturn(page);
 
         mockMvc.perform(get("/order"))
@@ -81,7 +80,7 @@ class OrderControllerTests {
 
     @Test
     void testGetOrderById() throws Exception {
-        when(orderService.getOrderById(1L)).thenReturn(orderDTO);
+        when(orderService.getOrderById(1L)).thenReturn(orderResponse);
 
         mockMvc.perform(get("/order/1"))
                 .andExpect(status().isOk())

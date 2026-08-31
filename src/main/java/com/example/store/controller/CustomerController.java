@@ -1,9 +1,9 @@
 package com.example.store.controller;
 
-import com.example.store.dto.CustomerDTO;
-import com.example.store.dto.CustomerSummaryDTO;
-import com.example.store.dto.OrderSimpleDTO;
-import com.example.store.entity.Customer;
+import com.example.store.dto.CreateCustomerRequest;
+import com.example.store.dto.CustomerResponse;
+import com.example.store.dto.CustomerSummaryResponse;
+import com.example.store.dto.OrderSimpleResponse;
 import com.example.store.service.CustomerService;
 
 import lombok.RequiredArgsConstructor;
@@ -29,7 +29,7 @@ public class CustomerController {
      * @return paginated list of customer summaries
      */
     @GetMapping
-    public Page<CustomerSummaryDTO> getAllCustomers(
+    public Page<CustomerSummaryResponse> getAllCustomers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = CustomerService.DEFAULT_PAGE_SIZE + "") int size,
             @RequestParam(required = false) String q) {
@@ -44,7 +44,7 @@ public class CustomerController {
      * @return customer summary with order count
      */
     @GetMapping("/{id}")
-    public CustomerSummaryDTO getCustomerById(@PathVariable Long id) {
+    public CustomerSummaryResponse getCustomerById(@PathVariable Long id) {
         return customerService.getCustomerById(id);
     }
 
@@ -57,7 +57,7 @@ public class CustomerController {
      * @return paginated orders without customer details
      */
     @GetMapping("/{customerId}/orders")
-    public Page<OrderSimpleDTO> getCustomerOrders(
+    public Page<OrderSimpleResponse> getCustomerOrders(
             @PathVariable Long customerId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = CustomerService.DEFAULT_PAGE_SIZE + "") int size) {
@@ -66,7 +66,7 @@ public class CustomerController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public CustomerDTO createCustomer(@RequestBody Customer customer) {
-        return customerService.createCustomer(customer);
+    public CustomerResponse createCustomer(@RequestBody CreateCustomerRequest request) {
+        return customerService.createCustomer(request);
     }
 }

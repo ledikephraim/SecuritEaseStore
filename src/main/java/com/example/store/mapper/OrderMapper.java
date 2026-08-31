@@ -1,8 +1,8 @@
 package com.example.store.mapper;
 
-import com.example.store.dto.OrderCustomerDTO;
-import com.example.store.dto.OrderDTO;
-import com.example.store.dto.OrderSimpleDTO;
+import com.example.store.dto.OrderCustomerResponse;
+import com.example.store.dto.OrderResponse;
+import com.example.store.dto.OrderSimpleResponse;
 import com.example.store.entity.Customer;
 import com.example.store.entity.Order;
 
@@ -12,13 +12,13 @@ import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface OrderMapper {
-    OrderDTO orderToOrderDTO(Order order);
+    OrderResponse orderToOrderResponse(Order order);
 
-    List<OrderDTO> ordersToOrderDTOs(List<Order> orders);
+    List<OrderResponse> ordersToOrderResponses(List<Order> orders);
 
-    OrderSimpleDTO orderToOrderSimpleDTO(Order order);
+    OrderSimpleResponse orderToOrderSimpleResponse(Order order);
 
-    List<OrderSimpleDTO> ordersToOrderSimpleDTOs(List<Order> orders);
+    List<OrderSimpleResponse> ordersToOrderSimpleResponses(List<Order> orders);
 
-    OrderCustomerDTO orderToOrderCustomerDTO(Customer customer);
+    OrderCustomerResponse orderToOrderCustomerResponse(Customer customer);
 }
