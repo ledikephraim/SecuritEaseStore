@@ -4,38 +4,20 @@ import com.example.store.dto.CustomerDTO;
 import com.example.store.dto.CustomerSummaryDTO;
 import com.example.store.dto.OrderSimpleDTO;
 import com.example.store.entity.Customer;
-import com.example.store.entity.Order;
-import com.example.store.mapper.CustomerMapper;
-import com.example.store.mapper.OrderMapper;
-import com.example.store.repository.CustomerOrderCount;
-import com.example.store.repository.CustomerRepository;
-import com.example.store.repository.OrderRepository;
+import com.example.store.service.CustomerService;
 
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/customer")
 @RequiredArgsConstructor
 public class CustomerController {
 
-    private static final int DEFAULT_PAGE_SIZE = 50;
-    private static final int MAX_PAGE_SIZE = 500;
-
-    private final CustomerRepository customerRepository;
-    private final OrderRepository orderRepository;
-    private final CustomerMapper customerMapper;
-    private final OrderMapper orderMapper;
+    private final CustomerService customerService;
 
     /**
      * Get all customers paginated, optionally filtered by a substring match against one of the words in the customer's
@@ -49,45 +31,9 @@ public class CustomerController {
     @GetMapping
     public Page<CustomerSummaryDTO> getAllCustomers(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = DEFAULT_PAGE_SIZE + "") int size,
+            @RequestParam(defaultValue = CustomerService.DEFAULT_PAGE_SIZE + "") int size,
             @RequestParam(required = false) String q) {
-
-        size = Math.min(size, MAX_PAGE_SIZE);
-        size = Math.max(size, 1);
-
-        Pageable pageable = PageRequest.of(page, size);
-        String query = q == null ? null : q.trim();
-
-        Page<Long> customerIds = (query == null || query.isEmpty())
-                ? customerRepository.findCustomerIds(pageable)
-                : customerRepository.findCustomerIdsByNameContaining(query, pageable);
-
-        if (customerIds.isEmpty()) {
-            return new PageImpl<>(List.of(), pageable, 0);
-        }
-
-        // Load customers without orders (lightweight)
-        List<Customer> customers = customerRepository.findCustomersById(customerIds.getContent());
-
-        // Build order count map for efficient lookup
-        List<CustomerOrderCount> counts = customerRepository.findOrderCountByCustomerIds(customerIds.getContent());
-        Map<Long, Long> orderCountMap = new HashMap<>();
-        for (CustomerOrderCount row : counts) {
-            orderCountMap.put(row.customerId(), row.orderCount());
-        }
-
-        // Convert to summary DTOs with order counts
-        List<CustomerSummaryDTO> summaries = customers.stream()
-                .map(c -> {
-                    CustomerSummaryDTO dto = new CustomerSummaryDTO();
-                    dto.setId(c.getId());
-                    dto.setName(c.getName());
-                    dto.setOrderCount(orderCountMap.getOrDefault(c.getId(), 0L).intValue());
-                    return dto;
-                })
-                .toList();
-
-        return new PageImpl<>(summaries, pageable, customerIds.getTotalElements());
+        return customerService.getAllCustomers(page, size, q);
     }
 
     /**
@@ -99,18 +45,7 @@ public class CustomerController {
      */
     @GetMapping("/{id}")
     public CustomerSummaryDTO getCustomerById(@PathVariable Long id) {
-        Customer customer =
-                customerRepository.findById(id).orElseThrow(() -> new RuntimeException("Customer not found: " + id));
-
-        // Get order count for this customer
-        List<CustomerOrderCount> counts = customerRepository.findOrderCountByCustomerIds(List.of(id));
-        int orderCount = counts.isEmpty() ? 0 : counts.get(0).orderCount().intValue();
-
-        CustomerSummaryDTO dto = new CustomerSummaryDTO();
-        dto.setId(customer.getId());
-        dto.setName(customer.getName());
-        dto.setOrderCount(orderCount);
-        return dto;
+        return customerService.getCustomerById(id);
     }
 
     /**
@@ -125,35 +60,13 @@ public class CustomerController {
     public Page<OrderSimpleDTO> getCustomerOrders(
             @PathVariable Long customerId,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = DEFAULT_PAGE_SIZE + "") int size) {
-
-        size = Math.min(size, MAX_PAGE_SIZE);
-        size = Math.max(size, 1);
-
-        // Verify customer exists
-        if (!customerRepository.existsById(customerId)) {
-            throw new RuntimeException("Customer not found: " + customerId);
-        }
-
-        Pageable pageable = PageRequest.of(page, size);
-        Page<Long> orderIds = orderRepository.findOrderIdsByCustomerId(customerId, pageable);
-
-        if (orderIds.isEmpty()) {
-            return new PageImpl<>(List.of(), pageable, 0);
-        }
-
-        // Fetch orders WITHOUT customer data (customer context already known from URL)
-        List<Order> orders = orderRepository.findOrdersByIdsWithCustomers(orderIds.getContent());
-
-        // Map to simple DTO (id, description only - no customer)
-        List<OrderSimpleDTO> dtos = orderMapper.ordersToOrderSimpleDTOs(orders);
-
-        return new PageImpl<>(dtos, pageable, orderIds.getTotalElements());
+            @RequestParam(defaultValue = CustomerService.DEFAULT_PAGE_SIZE + "") int size) {
+        return customerService.getCustomerOrders(customerId, page, size);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public CustomerDTO createCustomer(@RequestBody Customer customer) {
-        return customerMapper.customerToCustomerDTO(customerRepository.save(customer));
+        return customerService.createCustomer(customer);
     }
 }
