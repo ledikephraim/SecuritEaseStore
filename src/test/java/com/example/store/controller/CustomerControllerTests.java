@@ -59,7 +59,7 @@ class CustomerControllerTests {
         response.setName("John Smith");
         when(customerService.createCustomer(any(CreateCustomerRequest.class))).thenReturn(response);
 
-        mockMvc.perform(post("/customer")
+        mockMvc.perform(post("/customers")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -71,7 +71,7 @@ class CustomerControllerTests {
         Page<CustomerSummaryResponse> page = new PageImpl<>(List.of(summary), PageRequest.of(0, 50), 1);
         when(customerService.getAllCustomers(eq(0), eq(50), isNull())).thenReturn(page);
 
-        mockMvc.perform(get("/customer"))
+        mockMvc.perform(get("/customers"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].name").value("John Smith"));
     }
@@ -81,7 +81,7 @@ class CustomerControllerTests {
         Page<CustomerSummaryResponse> page = new PageImpl<>(List.of(summary), PageRequest.of(0, 50), 1);
         when(customerService.getAllCustomers(0, 50, "mit")).thenReturn(page);
 
-        mockMvc.perform(get("/customer").param("q", "mit"))
+        mockMvc.perform(get("/customers").param("q", "mit"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].name").value("John Smith"));
     }
@@ -90,7 +90,7 @@ class CustomerControllerTests {
     void testGetCustomerById() throws Exception {
         when(customerService.getCustomerById(1L)).thenReturn(summary);
 
-        mockMvc.perform(get("/customer/1"))
+        mockMvc.perform(get("/customers/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("John Smith"));
     }
@@ -99,7 +99,7 @@ class CustomerControllerTests {
     void testGetCustomerByIdReturns404WhenNotFound() throws Exception {
         when(customerService.getCustomerById(999L)).thenThrow(new NotFoundException("Customer not found: 999"));
 
-        mockMvc.perform(get("/customer/999"))
+        mockMvc.perform(get("/customers/999"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.detail").value("Customer not found: 999"));
     }

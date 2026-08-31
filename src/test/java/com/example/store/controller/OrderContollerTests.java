@@ -59,7 +59,7 @@ class OrderControllerTests {
 
         when(orderService.createOrder(any(CreateOrderRequest.class))).thenReturn(orderResponse);
 
-        mockMvc.perform(post("/order")
+        mockMvc.perform(post("/orders")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -72,7 +72,7 @@ class OrderControllerTests {
         Page<OrderResponse> page = new PageImpl<>(List.of(orderResponse), PageRequest.of(0, 50), 1);
         when(orderService.getAllOrders(0, 50, null)).thenReturn(page);
 
-        mockMvc.perform(get("/order"))
+        mockMvc.perform(get("/orders"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$..description").value("Test Order"))
                 .andExpect(jsonPath("$..customer.name").value("John Doe"));
@@ -82,7 +82,7 @@ class OrderControllerTests {
     void testGetOrderById() throws Exception {
         when(orderService.getOrderById(1L)).thenReturn(orderResponse);
 
-        mockMvc.perform(get("/order/1"))
+        mockMvc.perform(get("/orders/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.description").value("Test Order"));
     }
@@ -91,7 +91,7 @@ class OrderControllerTests {
     void testGetOrderByIdReturns404WhenNotFound() throws Exception {
         when(orderService.getOrderById(999L)).thenThrow(new NotFoundException("Order not found: 999"));
 
-        mockMvc.perform(get("/order/999"))
+        mockMvc.perform(get("/orders/999"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.detail").value("Order not found: 999"));
     }
