@@ -1,0 +1,7 @@
+databaseChangeLog:
+  - changeSet:
+      id: 5-resync-sequences
+      author: developer@securitease.com
+      changes:
+        - sqlFile:
+            path: db/changelog/resync-sequences.sql

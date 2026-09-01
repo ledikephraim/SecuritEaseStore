@@ -9,6 +9,8 @@ import com.example.store.repository.ProductRepository;
 
 import lombok.RequiredArgsConstructor;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -24,6 +26,8 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 public class ProductService {
+
+    private static final Logger log = LoggerFactory.getLogger(ProductService.class);
 
     public static final int DEFAULT_PAGE_SIZE = 50;
     public static final int MAX_PAGE_SIZE = 500;
@@ -65,7 +69,9 @@ public class ProductService {
     public ProductResponse createProduct(CreateProductRequest request) {
         Product product = new Product();
         product.setDescription(request.getDescription());
-        return toResponse(productRepository.save(product), List.of());
+        Product saved = productRepository.save(product);
+        log.info("Created product {}", saved.getId());
+        return toResponse(saved, List.of());
     }
 
     private static Map<Long, List<Long>> groupOrderIdsByProduct(List<ProductOrderRow> rows) {
