@@ -14,6 +14,8 @@ import com.example.store.repository.ProductRepository;
 
 import lombok.RequiredArgsConstructor;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -28,6 +30,8 @@ import java.util.Set;
 @Service
 @RequiredArgsConstructor
 public class OrderService {
+
+    private static final Logger log = LoggerFactory.getLogger(OrderService.class);
 
     public static final int DEFAULT_PAGE_SIZE = 50;
     public static final int MAX_PAGE_SIZE = 500;
@@ -107,7 +111,9 @@ public class OrderService {
         order.setCustomer(customer);
         order.setProducts(products);
 
-        return orderMapper.orderToOrderResponse(orderRepository.save(order));
+        Order saved = orderRepository.save(order);
+        log.info("Created order {} for customer {} with products {}", saved.getId(), customer.getId(), productIds);
+        return orderMapper.orderToOrderResponse(saved);
     }
 
     private static int clampPageSize(int size) {
