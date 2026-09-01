@@ -3,7 +3,11 @@ spring:
     url: jdbc:postgresql://localhost:5432/store
     username: admin
     password: admin
+    hikari:
+      maximum-pool-size: 10
+      leak-detection-threshold: 30000
   jpa:
+    open-in-view: false
     hibernate:
       ddl-auto: validate
     properties:

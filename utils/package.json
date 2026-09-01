@@ -1,7 +1,7 @@
 {
   "name": "data-generator",
   "version": "1.0.0",
-  "description": "Data generation for customers and orders",
+  "description": "Data generation for customers, products, and orders",
   "main": "generateData.js",
   "scripts": {
     "generate": "node generateData.js"

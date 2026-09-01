@@ -56,6 +56,12 @@ dependencies {
 
 }
 
+// Only the executable bootJar is needed; disabling the plain jar keeps build/libs
+// unambiguous for Docker (a wildcard COPY would otherwise match both).
+tasks.named('jar') {
+    enabled = false
+}
+
 tasks.named('test') {
     useJUnitPlatform()
     finalizedBy tasks.jacocoTestReport

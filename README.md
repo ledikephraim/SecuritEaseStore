@@ -34,26 +34,29 @@ You should be able to run the service using
 
 The application uses Liquibase to migrate the schema. Some sample data is provided. You can create more data by reading the documentation in utils/README.md
 
+# Running with Docker Compose
+As an alternative to the steps above, `docker compose up --build` starts both PostgreSQL and the application together - no separate database setup needed. The app is available at `http://localhost:8090` (mapped to port 8080 inside the container). PostgreSQL isn't exposed to the host in this setup; the app reaches it over the internal Docker network. If you need to connect to it directly (e.g. with a DB client), add a `ports` mapping to the `postgres` service in `docker-compose.yml`.
+
 # Data model
 An order has an ID, a description, and is associated with the customer which made the order.
 A customer has an ID, a name, and 0 or more orders.
 
 # API
 Two endpoints are provided:
-   * /order
-   * /customer
+   * /orders
+   * /customers
 
 Each of them supports a POST and a GET. The data model is circular - a customer owns a number of orders, and that order necessarily refers back to the customer which owns it.
-To avoid loops in the serializer, when writing out a Customer or an Order, they're mapped to CustomerDTO and OrderDTO which contain truncated versions of the dependent object - CustomerOrderDTO and OrderCustomerDTO respectively.
+To avoid loops in the serializer, when writing out a Customer or an Order, they're mapped to CustomerResponse and OrderResponse which contain truncated versions of the dependent object - CustomerOrderResponse and OrderCustomerResponse respectively.
 
 The API is documented in the OpenAPI file OpenAPI.yaml. Note that this spec includes part of one of the tasks below (the new /products endpoint)
 
 # Tasks
 
-1. Extend the order endpoint to find a specific order, by ID
-2. Extend the customer endpoint to find customers based on a query string to match a substring of one of the words in their name
-3. Users have complained that in production the GET endpoints can get very slow. The database is unfortunately not co-located with the application server, and there's high latency between the two. Identify if there are any optimisations that can improve performance
-4. Add a new endpoint /products to model products which appear in an order:
+1. Extend the order endpoint to find a specific order, by ID ✅
+2. Extend the customer endpoint to find customers based on a query string to match a substring of one of the words in their name ✅
+3. Users have complained that in production the GET endpoints can get very slow. The database is unfortunately not co-located with the application server, and there's high latency between the two. Identify if there are any optimisations that can improve performance ✅
+4. Add a new endpoint /products to model products which appear in an order: ✅
       * A single order contains 1 or more products. 
       * A product has an ID and a description. 
       * Add a POST endpoint to create a product
@@ -62,7 +65,7 @@ The API is documented in the OpenAPI file OpenAPI.yaml. Note that this spec incl
       * Change the orders endpoint to return a list of products contained in the order
 
 # Bonus points
-1. Implement a CI pipeline on the platform of your choice to build the project and deliver it as a Dockerized image
+1. Implement a CI pipeline on the platform of your choice to build the project and deliver it as a Dockerized image ✅
 
 # Notes on the tasks
 Assume that the project represents a production application.
