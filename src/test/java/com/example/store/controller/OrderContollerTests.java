@@ -2,6 +2,7 @@ package com.example.store.controller;
 
 import com.example.store.dto.CreateOrderRequest;
 import com.example.store.dto.OrderCustomerResponse;
+import com.example.store.dto.OrderProductResponse;
 import com.example.store.dto.OrderResponse;
 import com.example.store.exception.NotFoundException;
 import com.example.store.service.OrderService;
@@ -45,10 +46,15 @@ class OrderControllerTests {
         customerResponse.setId(1L);
         customerResponse.setName("John Doe");
 
+        OrderProductResponse productResponse = new OrderProductResponse();
+        productResponse.setId(1L);
+        productResponse.setDescription("Test Product");
+
         orderResponse = new OrderResponse();
         orderResponse.setId(1L);
         orderResponse.setDescription("Test Order");
         orderResponse.setCustomer(customerResponse);
+        orderResponse.setProducts(List.of(productResponse));
     }
 
     @Test
@@ -56,6 +62,7 @@ class OrderControllerTests {
         CreateOrderRequest request = new CreateOrderRequest();
         request.setDescription("Test Order");
         request.setCustomerId(1L);
+        request.setProductIds(List.of(1L));
 
         when(orderService.createOrder(any(CreateOrderRequest.class))).thenReturn(orderResponse);
 
@@ -64,7 +71,8 @@ class OrderControllerTests {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.description").value("Test Order"))
-                .andExpect(jsonPath("$.customer.name").value("John Doe"));
+                .andExpect(jsonPath("$.customer.name").value("John Doe"))
+                .andExpect(jsonPath("$.products[0].description").value("Test Product"));
     }
 
     @Test
@@ -74,8 +82,9 @@ class OrderControllerTests {
 
         mockMvc.perform(get("/orders"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$..description").value("Test Order"))
-                .andExpect(jsonPath("$..customer.name").value("John Doe"));
+                .andExpect(jsonPath("$.content[0].description").value("Test Order"))
+                .andExpect(jsonPath("$.content[0].customer.name").value("John Doe"))
+                .andExpect(jsonPath("$.content[0].products[0].description").value("Test Product"));
     }
 
     @Test
@@ -94,5 +103,39 @@ class OrderControllerTests {
         mockMvc.perform(get("/orders/999"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.detail").value("Order not found: 999"));
+    }
+
+    @Test
+    void testCreateOrderReturns400WhenNoProducts() throws Exception {
+        CreateOrderRequest request = new CreateOrderRequest();
+        request.setDescription("Test Order");
+        request.setCustomerId(1L);
+        request.setProductIds(List.of());
+
+        when(orderService.createOrder(any(CreateOrderRequest.class)))
+                .thenThrow(new IllegalArgumentException("An order must contain at least one product"));
+
+        mockMvc.perform(post("/orders")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.detail").value("An order must contain at least one product"));
+    }
+
+    @Test
+    void testCreateOrderReturns404WhenProductNotFound() throws Exception {
+        CreateOrderRequest request = new CreateOrderRequest();
+        request.setDescription("Test Order");
+        request.setCustomerId(1L);
+        request.setProductIds(List.of(999L));
+
+        when(orderService.createOrder(any(CreateOrderRequest.class)))
+                .thenThrow(new NotFoundException("Product(s) not found: [999]"));
+
+        mockMvc.perform(post("/orders")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.detail").value("Product(s) not found: [999]"));
     }
 }

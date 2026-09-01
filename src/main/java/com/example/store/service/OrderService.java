@@ -5,10 +5,12 @@ import com.example.store.dto.OrderResponse;
 import com.example.store.dto.OrderSimpleResponse;
 import com.example.store.entity.Customer;
 import com.example.store.entity.Order;
+import com.example.store.entity.Product;
 import com.example.store.exception.NotFoundException;
 import com.example.store.mapper.OrderMapper;
 import com.example.store.repository.CustomerRepository;
 import com.example.store.repository.OrderRepository;
+import com.example.store.repository.ProductRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -19,7 +21,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +34,7 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final CustomerRepository customerRepository;
+    private final ProductRepository productRepository;
     private final OrderMapper orderMapper;
 
     /**
@@ -79,9 +84,28 @@ public class OrderService {
                 .findById(request.getCustomerId())
                 .orElseThrow(() -> new NotFoundException("Customer not found: " + request.getCustomerId()));
 
+        List<Long> productIds = request.getProductIds();
+        if (productIds == null || productIds.isEmpty()) {
+            throw new IllegalArgumentException("An order must contain at least one product");
+        }
+
+        List<Product> products = productRepository.findAllById(productIds);
+        if (products.size() != new HashSet<>(productIds).size()) {
+            Set<Long> foundIds = new HashSet<>();
+            for (Product product : products) {
+                foundIds.add(product.getId());
+            }
+            List<Long> missingIds = productIds.stream()
+                    .filter(id -> !foundIds.contains(id))
+                    .distinct()
+                    .toList();
+            throw new NotFoundException("Product(s) not found: " + missingIds);
+        }
+
         Order order = new Order();
         order.setDescription(request.getDescription());
         order.setCustomer(customer);
+        order.setProducts(products);
 
         return orderMapper.orderToOrderResponse(orderRepository.save(order));
     }

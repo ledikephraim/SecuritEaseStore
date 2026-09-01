@@ -13,20 +13,20 @@ import java.util.Optional;
 
 public interface OrderRepository extends JpaRepository<Order, Long> {
 
-    /** Fetch all orders with their associated customers in a single query. */
-    @Query("SELECT DISTINCT o FROM Order o JOIN FETCH o.customer")
-    List<Order> findAllWithCustomers();
-
-    /** Fetch a specific order with its associated customer in a single query. */
-    @Query("SELECT o FROM Order o JOIN FETCH o.customer WHERE o.id = :id")
+    /** Fetch a specific order with its associated customer and products in a single query. */
+    @Query("SELECT DISTINCT o FROM Order o JOIN FETCH o.customer LEFT JOIN FETCH o.products WHERE o.id = :id")
     Optional<Order> findByIdWithCustomer(Long id);
 
     /** Get paginated order IDs. */
     @Query("SELECT o.id FROM Order o ORDER BY o.id")
     Page<Long> findOrderIds(Pageable pageable);
 
-    /** Fetch orders with their customers by IDs. */
-    @Query("SELECT DISTINCT o FROM Order o " + "JOIN FETCH o.customer " + "WHERE o.id IN :ids " + "ORDER BY o.id")
+    /** Fetch orders with their customers and products by IDs. */
+    @Query("SELECT DISTINCT o FROM Order o "
+            + "JOIN FETCH o.customer "
+            + "LEFT JOIN FETCH o.products "
+            + "WHERE o.id IN :ids "
+            + "ORDER BY o.id")
     List<Order> findOrdersByIdsWithCustomers(@Param("ids") List<Long> ids);
 
     /** Returns paginated order IDs for a customer. */
