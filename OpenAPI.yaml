@@ -15,7 +15,7 @@ servers:
   - url: 'http://localhost:8080'
     description: dev
 paths:
-  /order:
+  /orders:
     get:
       summary: Get Orders
       tags:
@@ -51,7 +51,7 @@ paths:
                   format: int64
                 descriptioon:
                   type: string
-  /customer:
+  /customers:
     get:
       summary: Get Customers
       tags:
